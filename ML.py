@@ -13,7 +13,7 @@ st.set_page_config(page_title="Risco Saúde", layout="wide", page_icon="🏥")
 # --- 1. FUNÇÃO DE TREINAMENTO COM MLFLOW ---
 def treinar_modelo_com_mlflow():
     # Caminho do banco de dados
-    caminho_csv = r'C:\Projetos\pos ia\dataset_saude_brasil.csv'
+    caminho_csv = 'dataset_saude_brasil.csv'
     
     if not os.path.exists(caminho_csv):
         st.error(f"Arquivo CSV não encontrado em: {caminho_csv}")
