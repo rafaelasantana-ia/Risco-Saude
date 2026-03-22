@@ -91,6 +91,7 @@ else:
 # --- 3. INTERFACE DO DASHBOARD ---
 st.title("🏥 Risco Saúde + MLflow Tracking")
 st.markdown("Analise de risco cardíaco com monitoramento de experimentos em tempo real.")
+st.warning("**Aviso Legal:** Este conteúdo é destinado apenas para fins educacionais. Os dados exibidos são ilustrativos e podem não corresponder a situações reais.")
 
 with st.form("diagnostico_form"):
     c1, c2, c3 = st.columns(3)
