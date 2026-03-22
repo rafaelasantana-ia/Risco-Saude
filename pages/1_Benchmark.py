@@ -205,5 +205,10 @@ if X is not None:
             
             st.dataframe(tabela_formatada, use_container_width=True)
             
-            melhor = df_res.iloc[0]['Modelo']
-            st.info(f"🏆 O melhor modelo neste split (baseado em F1-Score) foi o **{melhor}**.")
+            # Salvar o melhor modelo para ser o "Oficial" da página Diagnóstico
+            import joblib
+            melhor_nome = df_res.iloc[0]['Modelo']
+            melhor_modelo_obj = modelos_disponiveis[melhor_nome]
+            joblib.dump(melhor_modelo_obj, 'modelo_risco_saude.pkl')
+            
+            st.info(f"🏆 O melhor modelo neste split baseado em F1-Score foi o **{melhor_nome}**. \n\nEle foi **salvo automaticamente** e já está ativado na Página Inicial de Diagnóstico!")

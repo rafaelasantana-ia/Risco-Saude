@@ -1,125 +1,16 @@
 import pandas as pd
 import joblib
 import streamlit as st
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
 import os
-import mlflow
-import mlflow.sklearn
-import numpy as np
-from scipy.stats import mstats
-
-def clip_iqr(s: pd.Series, factor: float = 1.5) -> pd.Series:
-    q1, q3 = s.quantile(0.25), s.quantile(0.75)
-    iqr = q3 - q1
-    lo, hi = q1 - factor * iqr, q3 + factor * iqr
-    return s.clip(lo, hi)
-
-def winsorize_series(s: pd.Series, limits=(0.01, 0.01)) -> pd.Series:
-    arr = s.astype(float).values
-    mask = np.isfinite(arr)
-    if mask.sum() == 0:
-        return s
-    out = arr.copy()
-    out[mask] = mstats.winsorize(arr[mask], limits=limits)
-    return pd.Series(out, index=s.index)
-
-def cap_zscore(s: pd.Series, z: float = 3.0) -> pd.Series:
-    mu, sd = s.mean(), s.std()
-    if sd == 0 or np.isnan(sd):
-        return s
-    lo, hi = mu - z * sd, mu + z * sd
-    return s.clip(lo, hi)
 
 # --- CONFIGURAÇÃO DA PÁGINA STREAMLIT ---
 st.set_page_config(page_title="Risco Saúde", layout="wide", page_icon="🏥")
 
-# --- 1. FUNÇÃO DE TREINAMENTO COM MLFLOW ---
-def treinar_modelo_com_mlflow():
-    # Caminho do banco de dados
-    caminho_csv = 'dataset_saude_brasil.csv'
-    
-    if not os.path.exists(caminho_csv):
-        st.error(f"Arquivo CSV não encontrado em: {caminho_csv}")
-        return None
-
-    df = pd.read_csv(caminho_csv)
-
-    # --- TRATAMENTO E FEATURE ENGINEERING ---
-    cols_numericas = ['Passos_Diarios', 'Calorias', 'Colesterol']
-    for col in cols_numericas:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
-
-    df['Idade'] = df['Idade'].fillna(df['Idade'].median())
-    df['IMC'] = df['IMC'].fillna(df['IMC'].median())
-    df['Passos_Diarios'] = df['Passos_Diarios'].fillna(df['Passos_Diarios'].mean())
-    df['Colesterol'] = df['Colesterol'].fillna(df['Colesterol'].median())
-    df['Calorias'] = df['Calorias'].fillna(df['Calorias'].median())
-
-    # --- TRATAMENTO DE OUTLIERS ---
-    for col in ["Passos_Diarios", "Calorias", "Colesterol", "IMC"]:
-        if col in df.columns:
-            df[col] = winsorize_series(df[col], limits=(0.01, 0.01))
-            df[col] = clip_iqr(df[col])
-
-    for col in ["Pressao_Sistolica"]:
-        if col in df.columns:
-            df[col] = cap_zscore(df[col], z=3.0)
-
-    df['Hipertensao'] = df['Pressao_Sistolica'].apply(lambda x: 1 if x > 140 else 0)
-    df['Impacto_IMC_Idade'] = df['IMC'] * df['Idade']
-    df['Stress_Trabalho'] = ((df['Horas_Trabalho'] > 10) & (df['Horas_Sono'] < 6)).astype(int)
-
-    df['Fumante_Num'] = df['Fumante'].map({'Sim': 1, 'Não': 0})
-    df['Alcool_Num'] = df['Alcool'].map({'Baixo': 0, 'Moderado': 1, 'Alto': 2})
-    df['Sexo_Num'] = df['Sexo'].map({'Masculino': 1, 'Feminino': 0})
-    df['Hist_Familiar_Num'] = df['Historico_Familiar'].map({'Sim': 1, 'Não': 0})
-
-    features = [
-        'Idade', 'IMC', 'Passos_Diarios', 'Horas_Sono', 'Agua_Litros', 
-        'Fumante_Num', 'Alcool_Num', 'Pressao_Sistolica', 'Hipertensao', 
-        'Impacto_IMC_Idade', 'Sexo_Num', 'Hist_Familiar_Num', 'Colesterol',
-        'Stress_Trabalho'
-    ]
-
-    X = df[features]
-    y = df['Risco_Doenca']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # --- INÍCIO DO RASTREAMENTO MLFLOW ---
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
-    mlflow.set_experiment("Monitoramento_Cardio_Predict")
-    
-    with mlflow.start_run(run_name="RandomForest_Final_Model"):
-        # Parâmetros
-        n_est = 300
-        depth = 15
-        mlflow.log_param("n_estimators", n_est)
-        mlflow.log_param("max_depth", depth)
-
-        # Treino
-        modelo = RandomForestClassifier(
-            n_estimators=n_est, max_depth=depth, min_samples_leaf=4, 
-            class_weight='balanced', random_state=42
-        )
-        modelo.fit(X_train, y_train)
-        
-        # Métricas
-        acuracia = modelo.score(X_test, y_test)
-        mlflow.log_metric("accuracy", acuracia)
-
-        # Log do Modelo no MLflow
-        mlflow.sklearn.log_model(modelo, "model")
-        
-        # Salva localmente para uso imediato do Streamlit
-        joblib.dump(modelo, 'modelo_risco_saude.pkl')
-        
-        return modelo
-
-# --- 2. LOGICA DE CARREGAMENTO ---
+# --- 1. LÓGICA DE CARREGAMENTO DO MODELO ---
 if not os.path.exists('modelo_risco_saude.pkl'):
-    with st.spinner('Treinando IA e registrando no MLflow...'):
-        modelo = treinar_modelo_com_mlflow()
+    st.warning("⚠️ Nenhum modelo de Inteligência Artificial encontrado no sistema!")
+    st.info("👉 Vá até a página de **Benchmark** no menu lateral, escolha os testes e clique em Treinar. O melhor modelo gerado será ativado aqui automaticamente.")
+    st.stop()
 else:
     modelo = joblib.load('modelo_risco_saude.pkl')
 
@@ -186,13 +77,9 @@ if enviar:
         </div>
     """, unsafe_allow_html=True)
 
-# Rodapé com informações do MLflow
-st.sidebar.markdown("### 🛠️ ML Ops Status")
-st.sidebar.write("📡 **MLflow Tracking:** Ativo")
-st.sidebar.write("📂 **Experimento:** Analise_Risco_Cardiaco")
-st.sidebar.write(f"🎯 **Acurácia Atual:** 81.80%")
-
-if st.sidebar.button("Limpar Cache de Modelo"):
+# Rodapé lateral
+st.sidebar.markdown("### 🛠️ Configurações Gerais")
+if st.sidebar.button("Excluir Modelo Ativo"):
     if os.path.exists('modelo_risco_saude.pkl'):
         os.remove('modelo_risco_saude.pkl')
-        st.sidebar.success("Cache limpo! Reinicie para retreinar.")
+        st.rerun()
