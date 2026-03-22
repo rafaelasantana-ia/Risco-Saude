@@ -89,6 +89,7 @@ if X is not None:
         else:
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
             
+            mlflow.set_tracking_uri("sqlite:///mlflow.db")
             mlflow.set_experiment("Benchmark_Cardio_Predict")
             
             resultados = []
