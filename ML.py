@@ -80,6 +80,11 @@ if enviar:
         </div>
     """, unsafe_allow_html=True)
 
+# Exibe o modelo ativo
+nome_modelo_ativo = type(modelo).__name__
+st.sidebar.markdown("### 🤖 IA Ativa no Sistema")
+st.sidebar.success(f"**{nome_modelo_ativo}**")
+
 # Rodapé lateral
 st.sidebar.markdown("### 🛠️ Configurações Gerais")
 if st.sidebar.button("Excluir Modelo Ativo"):
