@@ -30,8 +30,11 @@ with st.form("diagnostico_form"):
         trabalho = st.slider("Horas de Trabalho/Dia", 0, 16, 8)
 
     with c2:
-        st.subheader("🍏 Hábitos")
-        imc = st.number_input("IMC", 10.0, 50.0, 24.5)
+        st.subheader("🍏 Físico e Hábitos")
+        peso = st.number_input("Peso (kg)", 30.0, 250.0, 75.0)
+        altura = st.number_input("Altura (m)", 1.00, 2.50, 1.70, step=0.01)
+        imc = peso / (altura ** 2)
+        st.caption(f"📐 **IMC Automático:** {imc:.1f}")
         passos = st.number_input("Passos Diários", 0, 30000, 7000)
         sono = st.slider("Horas de Sono", 0, 12, 7)
         agua = st.slider("Água (Litros/Dia)", 0.0, 5.0, 2.0)
