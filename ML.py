@@ -8,7 +8,7 @@ import mlflow
 import mlflow.sklearn
 
 # --- CONFIGURAÇÃO DA PÁGINA STREAMLIT ---
-st.set_page_config(page_title="CardioPredict AI", layout="wide", page_icon="🏥")
+st.set_page_config(page_title="Risco Saúde", layout="wide", page_icon="🏥")
 
 # --- 1. FUNÇÃO DE TREINAMENTO COM MLFLOW ---
 def treinar_modelo_com_mlflow():
@@ -89,7 +89,7 @@ else:
     modelo = joblib.load('modelo_risco_saude.pkl')
 
 # --- 3. INTERFACE DO DASHBOARD ---
-st.title("🏥 CardioPredict AI + MLflow Tracking")
+st.title("🏥 Risco Saúde + MLflow Tracking")
 st.markdown("Analise de risco cardíaco com monitoramento de experimentos em tempo real.")
 
 with st.form("diagnostico_form"):

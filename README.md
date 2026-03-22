@@ -1,6 +1,6 @@
-# CardioPredict AI 🏥
+# Risco Saúde 🏥
 
-CardioPredict AI é um projeto completo de Machine Learning focado em prever o **Risco de Doença Cardíaca** com base em fatores clínicos, histórico familiar e estilo de vida. O projeto contempla análise exploratória de dados, tratamento de outliers, engenharia de atributos (feature engineering), experimentação e tuning usando **MLflow**, e um dashboard interativo feito com **Streamlit**.
+O Risco Saúde é um projeto completo de Machine Learning focado em prever o **Risco de Doença Cardíaca** com base em fatores clínicos, histórico familiar e estilo de vida. O projeto contempla análise exploratória de dados, tratamento de outliers, engenharia de atributos (feature engineering), experimentação e tuning usando **MLflow**, e um dashboard interativo feito com **Streamlit**.
 
 ## 🚀 Estrutura do Projeto
 
@@ -16,8 +16,8 @@ Para rodar o projeto localmente, primeiro clone este repositório no seu computa
 
 ```bash
 # Clone o repositório
-git clone https://github.com/SeuUsuario/CardioPredict-AI.git
-cd CardioPredict-AI
+git clone https://github.com/rafaelasantana150/risco-saude.git
+cd risco-saude
 
 # Crie e ative um ambiente virtual (Windows)
 python -m venv venv
