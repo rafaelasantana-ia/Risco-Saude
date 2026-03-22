@@ -13,6 +13,30 @@ import seaborn as sns
 import mlflow
 import mlflow.sklearn
 import os
+import numpy as np
+from scipy.stats import mstats
+
+def clip_iqr(s: pd.Series, factor: float = 1.5) -> pd.Series:
+    q1, q3 = s.quantile(0.25), s.quantile(0.75)
+    iqr = q3 - q1
+    lo, hi = q1 - factor * iqr, q3 + factor * iqr
+    return s.clip(lo, hi)
+
+def winsorize_series(s: pd.Series, limits=(0.01, 0.01)) -> pd.Series:
+    arr = s.astype(float).values
+    mask = np.isfinite(arr)
+    if mask.sum() == 0:
+        return s
+    out = arr.copy()
+    out[mask] = mstats.winsorize(arr[mask], limits=limits)
+    return pd.Series(out, index=s.index)
+
+def cap_zscore(s: pd.Series, z: float = 3.0) -> pd.Series:
+    mu, sd = s.mean(), s.std()
+    if sd == 0 or np.isnan(sd):
+        return s
+    lo, hi = mu - z * sd, mu + z * sd
+    return s.clip(lo, hi)
 
 st.set_page_config(page_title="Benchmark", page_icon="📊", layout="wide")
 st.title("📊 Benchmark Avançado de Modelos")
@@ -38,6 +62,16 @@ def carregar_e_preparar_dados():
     df['Passos_Diarios'] = df['Passos_Diarios'].fillna(df['Passos_Diarios'].mean())
     df['Colesterol'] = df['Colesterol'].fillna(df['Colesterol'].median())
     df['Calorias'] = df['Calorias'].fillna(df['Calorias'].median())
+
+    # --- TRATAMENTO DE OUTLIERS ---
+    for col in ["Passos_Diarios", "Calorias", "Colesterol", "IMC"]:
+        if col in df.columns:
+            df[col] = winsorize_series(df[col], limits=(0.01, 0.01))
+            df[col] = clip_iqr(df[col])
+
+    for col in ["Pressao_Sistolica"]:
+        if col in df.columns:
+            df[col] = cap_zscore(df[col], z=3.0)
 
     df['Hipertensao'] = df['Pressao_Sistolica'].apply(lambda x: 1 if x > 140 else 0)
     df['Impacto_IMC_Idade'] = df['IMC'] * df['Idade']
